@@ -44,11 +44,9 @@ def install_homebrew():
 def install_packages():
     print("Installing Homebrew packages... ")
     for package in packages: 
-        command = f"brew install --cask {package}"
-        print(f"\n {package}")
+        command = f"brew install {package}"
+        print(f"\n {command}")
         run_command(command)
-
-    run_command(f"brew install {' '.join(packages)}")
 
 def install_apps():
     print("Installing applications...")
