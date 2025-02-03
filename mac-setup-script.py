@@ -1,6 +1,6 @@
 import os
-import subprocess
 import time
+import subprocess
 
 # Edit the apps and packages below for setup
 apps = ["google-chrome", "visual-studio-code", "iterm2", "spotify", "rectangle"]
@@ -55,6 +55,13 @@ def install_apps():
         print(f"\n {command}")
         run_command(command)
 
+def setup_github():
+    run_command("ssh-keygen -t rsa")
+    output = input("Copy RSA key and enter it into github [Press Enter and continue to github]")
+
+    run_command("open -a \"Google Chrome\" https://github.com/settings/keys")
+    output = input("Press Enter to Continue.")
+
 def set_macos_preferences():
     print("Configuring macOS preferences...")
     run_command("defaults write NSGlobalDomain AppleShowAllFiles -bool true")
@@ -65,6 +72,7 @@ def main():
     install_homebrew()
     install_packages()
     install_apps()
+    setup_github()
     set_macos_preferences()
     print("Setup complete! Restart your machine for all changes to take effect.")
 
