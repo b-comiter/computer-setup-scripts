@@ -3,7 +3,7 @@ import time
 import subprocess
 
 # Edit the apps and packages below for setup
-apps = ["google-chrome", "visual-studio-code", "iterm2", "spotify", "rectangle"]
+apps = ["google-chrome", "visual-studio-code", "iterm2", "chatgpt", "spotify", "rectangle"]
 packages = ["git", "node", "python", "wget", "docker", "docker-compose"]
 
 def run_command(command):
@@ -56,11 +56,17 @@ def install_apps():
         run_command(command)
 
 def setup_github():
-    run_command("ssh-keygen -t rsa")
-    output = input("Copy RSA key and enter it into github [Press Enter and continue to github]")
 
-    run_command("open -a \"Google Chrome\" https://github.com/settings/keys")
-    output = input("Press Enter to Continue.")
+    user_input = input("Do you want to setup Github RSA? [Type YES or NO]").strip().lower()
+
+    if user_input in ("yes", "y"):
+        run_command("ssh-keygen -t rsa")
+        output = input("Copy RSA key and enter it into github [Press Enter and continue to github]")
+
+        run_command("open -a \"Google Chrome\" https://github.com/settings/keys")
+        output = input("Press Enter to Continue.")
+    elif user_input in ("no", "n"):
+        print("You have indicated no.")
 
 def set_macos_preferences():
     print("Configuring macOS preferences...")
