@@ -6,8 +6,8 @@ from tkinter import messagebox
 from tkinter import scrolledtext
 import threading
 
-apps = ["google-chrome", "visual-studio-code", "iterm2", "chatgpt", "spotify", "rectangle"]
-packages = ["git", "node", "python", "wget", "docker", "docker-compose"]
+apps = ["google-chrome", "visual-studio-code", "iterm2", "chatgpt", "spotify", "rectangle", "scroll-reverser", "docker"]
+packages = ["git", "node", "python", "wget", "docker-compose"]
 
 setup_thread = None
 stop_event = threading.Event()
