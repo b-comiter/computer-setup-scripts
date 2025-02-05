@@ -1,86 +1,109 @@
 import os
 import time
 import subprocess
+import tkinter as tk
+from tkinter import messagebox
+from tkinter import scrolledtext
+import threading
 
-# Edit the apps and packages below for setup
 apps = ["google-chrome", "visual-studio-code", "iterm2", "chatgpt", "spotify", "rectangle"]
 packages = ["git", "node", "python", "wget", "docker", "docker-compose"]
 
-def run_command(command):
-    """Runs a shell command and prints output."""
+def run_command(command, output_box):
+    output_box.insert(tk.END, f"Running: {command}\n")
+    output_box.see(tk.END)
+    output_box.update_idletasks()
     result = subprocess.run(command, shell=True, capture_output=True, text=True)
     if result.returncode == 0:
-        print(result.stdout)
+        output_box.insert(tk.END, result.stdout + "\n")
     else:
-        print(f"Error: {result.stderr}")
+        output_box.insert(tk.END, f"Error: {result.stderr}\n")
+    output_box.see(tk.END)
+    output_box.update_idletasks()
 
-def install_xcode():
+def install_xcode(output_box):
     def check_xcode_installed():
         result = subprocess.run(['xcode-select', '-p'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         return result.returncode == 0
 
-    def wait_for_xcode_installation():
-        while not check_xcode_installed():
-            print("Waiting for Xcode to be installed...")
-            time.sleep(10)  # Check every 10 seconds
-
-    if (check_xcode_installed()):
+    if check_xcode_installed():
+        output_box.insert(tk.END, "Xcode is already installed.\n")
+        output_box.update_idletasks()
         return
-    # You can prompt the user to install Xcode here, or automatically invoke a command to start the installation
-    subprocess.run(['sudo', 'xcode-select', '--install'])
-    wait_for_xcode_installation()
-    print("Xcode is now installed.")
 
-def install_homebrew():
-    print("Checking Homebrew installation...")
+    run_command("sudo xcode-select --install", output_box)
+    while not check_xcode_installed():
+        output_box.insert(tk.END, "Waiting for Xcode installation...\n")
+        output_box.update_idletasks()
+        time.sleep(10)
+    output_box.insert(tk.END, "Xcode installation complete.\n")
+    output_box.update_idletasks()
+
+def install_homebrew(output_box):
+    output_box.insert(tk.END, "Checking Homebrew installation...\n")
+    output_box.update_idletasks()
     if subprocess.run("command -v brew", shell=True).returncode != 0:
-        print("Installing Homebrew...")
-        run_command("/bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\"")
+        run_command("/bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\"", output_box)
         os.system('echo "eval \"$(/opt/homebrew/bin/brew shellenv)\"" >> ~/.zshrc')
         os.system('eval "$(/opt/homebrew/bin/brew shellenv)"')
     else:
-        print("Homebrew is already installed.")
+        output_box.insert(tk.END, "Homebrew is already installed.\n")
+        output_box.update_idletasks()
 
-def install_packages():
-    print("Installing Homebrew packages... ")
-    for package in packages: 
-        command = f"brew install {package}"
-        print(f"\n {command}")
-        run_command(command)
+def install_packages(output_box):
+    output_box.insert(tk.END, "Installing Homebrew packages...\n")
+    output_box.update_idletasks()
+    for package in packages:
+        run_command(f"brew install {package}", output_box)
 
-def install_apps():
-    print("Installing applications...")
-    for app in apps: 
-        command = f"brew install --cask {app}"
-        print(f"\n {command}")
-        run_command(command)
+def install_apps(output_box):
+    output_box.insert(tk.END, "Installing applications...\n")
+    output_box.update_idletasks()
+    for app in apps:
+        run_command(f"brew install --cask {app}", output_box)
 
-def setup_github():
+def setup_github(output_box):
+    user_input = messagebox.askyesno("GitHub Setup", "Do you want to setup GitHub RSA?")
+    if user_input:
+        run_command("ssh-keygen -t rsa", output_box)
+        messagebox.showinfo("GitHub", "Copy RSA key and add it to GitHub")
+        run_command("open -a \"Google Chrome\" https://github.com/settings/keys", output_box)
 
-    user_input = input("Do you want to setup Github RSA? [Type YES or NO]").strip().lower()
+def set_macos_preferences(output_box):
+    output_box.insert(tk.END, "Configuring macOS preferences...\n")
+    output_box.update_idletasks()
+    run_command("defaults write NSGlobalDomain AppleShowAllFiles -bool true", output_box)
+    run_command("defaults write com.apple.dock autohide -bool true && killall Dock", output_box)
 
-    if user_input in ("yes", "y"):
-        run_command("ssh-keygen -t rsa")
-        output = input("Copy RSA key and enter it into github [Press Enter and continue to github]")
+def start_setup(output_box):
+    def run_setup():
+        install_xcode(output_box)
+        install_homebrew(output_box)
+        install_packages(output_box)
+        install_apps(output_box)
+        setup_github(output_box)
+        set_macos_preferences(output_box)
+        output_box.insert(tk.END, "Setup complete! Restart your machine for changes to take effect.\n")
+        output_box.update_idletasks()
+        messagebox.showinfo("Setup Complete", "Restart your machine for all changes to take effect.")
+    
+    threading.Thread(target=run_setup, daemon=True).start()
 
-        run_command("open -a \"Google Chrome\" https://github.com/settings/keys")
-        output = input("Press Enter to Continue.")
-    elif user_input in ("no", "n"):
-        print("You have indicated no.")
-
-def set_macos_preferences():
-    print("Configuring macOS preferences...")
-    run_command("defaults write NSGlobalDomain AppleShowAllFiles -bool true")
-    run_command("defaults write com.apple.dock autohide -bool true && killall Dock")
-
-def main():
-    install_xcode()
-    install_homebrew()
-    install_packages()
-    install_apps()
-    setup_github()
-    set_macos_preferences()
-    print("Setup complete! Restart your machine for all changes to take effect.")
+def create_gui():
+    root = tk.Tk()
+    root.title("Mac Setup Tool")
+    root.geometry("600x400")
+    
+    frame = tk.Frame(root)
+    frame.pack(pady=10)
+    
+    output_box = scrolledtext.ScrolledText(root, wrap=tk.WORD, width=70, height=15)
+    output_box.pack(pady=10)
+    
+    start_button = tk.Button(frame, text="Start Setup", command=lambda: start_setup(output_box))
+    start_button.pack()
+    
+    root.mainloop()
 
 if __name__ == "__main__":
-    main()
+    create_gui()
